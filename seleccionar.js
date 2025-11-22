@@ -37,6 +37,11 @@ if (!fs.existsSync(dataFile)) {
 let servidores = {};
 
 // Leer archivo dir.txt con validaciones
+/**
+ * Carga los servidores desde el archivo JSON local (dir.txt).
+ * Realiza validaciones para asegurar que el formato sea correcto.
+ * Si encuentra errores críticos, termina la ejecución del proceso.
+ */
 function cargarServidores() {
     try {
         const raw = fs.readFileSync(dataFile, "utf8");
@@ -63,6 +68,12 @@ cargarServidores();
 const arg = process.argv[2];
 if (arg) manejarArgumento(arg);
 
+/**
+ * Maneja la lógica de conexión cuando se proporciona un nombre de servidor como argumento.
+ * Si el servidor existe, inicia la conexión. Si no, solicita reintento.
+ * 
+ * @param {string} nombre - El nombre o clave del servidor en la configuración.
+ */
 function manejarArgumento(nombre) {
     if (!servidores[nombre]) {
         console.log(`❌ La conexión "${nombre}" no existe.`);
@@ -74,6 +85,11 @@ function manejarArgumento(nombre) {
 
 // Reintento si el usuario escribe mal
 let intentos = 0;
+/**
+ * Gestiona los reintentos cuando el usuario ingresa un servidor no válido por argumento.
+ * Permite buscar interactivamente el servidor correcto.
+ * Se limita a un máximo de 3 intentos fallidos antes de cerrar el programa.
+ */
 async function reintentarArgumento() {
     intentos++;
     if (intentos >= 3) {
@@ -94,6 +110,13 @@ async function reintentarArgumento() {
 }
 
 // Autocomplete dinámico
+/**
+ * Filtra la lista de servidores disponibles basándose en la entrada del usuario.
+ * Utilizado por el autocompletado de inquirer.
+ * 
+ * @param {string} [input=""] - Texto ingresado por el usuario para filtrar.
+ * @returns {Array<{name: string, value: string}>} Array de objetos con nombre (para mostrar) y valor (clave del servidor).
+ */
 function filtrarServidores(input = "") {
     const lower = input.toLowerCase();
     return Object.keys(servidores)
@@ -102,6 +125,10 @@ function filtrarServidores(input = "") {
 }
 
 // Menú principal
+/**
+ * Muestra el menú interactivo principal.
+ * Permite al usuario buscar y seleccionar un servidor de la lista.
+ */
 async function seleccionarServidor() {
     const { opcion } = await inquirer.prompt([
         {
@@ -121,6 +148,12 @@ async function seleccionarServidor() {
 }
 
 // Ejecutar el comando SSH
+/**
+ * Ejecuta el comando de conexión SSH en un proceso hijo.
+ * Hereda la entrada/salida estándar para permitir la interacción con la sesión SSH.
+ * 
+ * @param {string} comando - El comando completo a ejecutar (ej. "ssh usuario@host").
+ */
 function conectar(comando) {
     console.log(`\n🔌 Conectando → ${comando}\n`);
 
