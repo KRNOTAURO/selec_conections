@@ -1,0 +1,5 @@
+{
+    "produccion": "ssh root@192.168.1.100",
+    "staging": "ssh dev@staging.example.com -p 2222",
+    "aws-server": "ssh -i key.pem ubuntu@aws-ip"
+}
