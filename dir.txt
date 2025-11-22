@@ -1,5 +1,0 @@
-
-{
-    "server1" : "xxxxxxxxxx",
-    "server2" : "xxxxxxxxxxx"
-}
