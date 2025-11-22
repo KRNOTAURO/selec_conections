@@ -1,5 +1,0 @@
-
-{
-    "k2" : "ssh -i id_ed25519 cquijada@44.223.221.56",
-    "fenix" : "ssh cquijada@54.80.103.15"
-}
