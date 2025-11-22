@@ -46,19 +46,22 @@ function cargarServidores() {
     try {
         const raw = fs.readFileSync(dataFile, "utf8");
         servidores = JSON.parse(raw);
-
-        const invalids = Object.keys(servidores).filter(
-            k => !servidores[k] || typeof servidores[k] !== "string" || servidores[k].trim() === ""
-        );
-
-        if (invalids.length > 0) {
-            console.log("⚠️ Advertencia: Hay conexiones sin comando definido:");
-            invalids.forEach(k => console.log("  -", k));
-        }
     } catch (err) {
         console.error("❌ ERROR: El archivo dir.txt contiene JSON inválido.");
         console.error(err.message);
         process.exit(1);
+    }
+}
+
+/**
+ * Guarda el objeto de servidores actual en el archivo dir.txt.
+ */
+function guardarServidores() {
+    try {
+        fs.writeFileSync(dataFile, JSON.stringify(servidores, null, 4), "utf8");
+        console.log("💾 Cambios guardados en dir.txt");
+    } catch (err) {
+        console.error("❌ Error al guardar en dir.txt:", err.message);
     }
 }
 
@@ -119,9 +122,16 @@ async function reintentarArgumento() {
  */
 function filtrarServidores(input = "") {
     const lower = input.toLowerCase();
-    return Object.keys(servidores)
+    const matches = Object.keys(servidores)
         .filter(key => key.toLowerCase().includes(lower))
         .map(key => ({ name: `${key} → ${servidores[key]}`, value: key }));
+
+    return [
+        ...matches,
+        { name: "➕ Agregar nueva conexión", value: "AGREGAR" },
+        { name: "🗑️ Eliminar conexión", value: "ELIMINAR" },
+        { name: "❌ Cancelar", value: "CANCELAR" }
+    ];
 }
 
 // Menú principal
@@ -139,12 +149,82 @@ async function seleccionarServidor() {
         }
     ]);
 
+    if (opcion === "CANCELAR") {
+        console.log("👋 Operación cancelada.");
+        process.exit(0);
+    }
+
+    if (opcion === "AGREGAR") {
+        await agregarConexion();
+        return;
+    }
+
+    if (opcion === "ELIMINAR") {
+        await eliminarConexion();
+        return;
+    }
+
     if (!servidores[opcion]) {
         console.log(`❌ La conexión "${opcion}" no está configurada.`);
         return;
     }
 
     conectar(servidores[opcion]);
+}
+
+/**
+ * Solicita datos al usuario para agregar una nueva conexión y la guarda.
+ */
+async function agregarConexion() {
+    const respuestas = await inquirer.prompt([
+        {
+            type: "input",
+            name: "nombre",
+            message: "Nombre de la conexión:",
+            validate: input => input.trim() !== "" ? true : "El nombre no puede estar vacío."
+        },
+        {
+            type: "input",
+            name: "comando",
+            message: "Comando SSH (ej. ssh user@host):",
+            validate: input => input.trim() !== "" ? true : "El comando no puede estar vacío."
+        }
+    ]);
+
+    servidores[respuestas.nombre] = respuestas.comando;
+    guardarServidores();
+    console.log(`✅ Conexión "${respuestas.nombre}" agregada.`);
+
+    // Volver al menú principal
+    seleccionarServidor();
+}
+
+/**
+ * Muestra una lista para eliminar una conexión existente.
+ */
+async function eliminarConexion() {
+    const { aEliminar } = await inquirer.prompt([
+        {
+            type: "autocomplete",
+            name: "aEliminar",
+            message: "Selecciona la conexión a ELIMINAR:",
+            source: (_, input) => {
+                const lower = (input || "").toLowerCase();
+                return Object.keys(servidores)
+                    .filter(key => key.toLowerCase().includes(lower))
+                    .map(key => ({ name: key, value: key }));
+            }
+        }
+    ]);
+
+    if (aEliminar) {
+        delete servidores[aEliminar];
+        guardarServidores();
+        console.log(`🗑️ Conexión "${aEliminar}" eliminada.`);
+    }
+
+    // Volver al menú principal
+    seleccionarServidor();
 }
 
 // Ejecutar el comando SSH
