@@ -1,0 +1,16 @@
+{
+  "name": "selec_srv",
+  "version": "1.0.0",
+  "description": "Gestor rápido de conexiones SSH",
+  "type": "module",
+  "main": "seleccionar.js",
+  "bin": {
+    "conect": "./seleccionar.js"
+  },
+  "scripts": {
+    "start": "node seleccionar.js"
+  },
+  "dependencies": {
+    "inquirer": "^13.0.1"
+  }
+}
